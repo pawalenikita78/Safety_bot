@@ -30,16 +30,15 @@ def query_mistral(prompt, context, history=None):
     if history:
         for h in history:
             history_str += f"User: {h['user']}\nAssistant: {h['bot']}\n"
-    # Add the current prompt as the latest user message
     history_str += f"User: {prompt}\n"
 
     full_prompt = (
         "You are a polite, helpful assistant. "
-        "You can answer general questions like greetings, goodbyes, casual conversations, or polite phrases in a friendly way using your general knowledge. "
-        "For all other questions, only use the information provided in the context below. "
-        "If the next question is based on a previous question, answer using the given document and previous answers. "
+        "For greetings, goodbyes, and general conversation, answer naturally using your general knowledge. "
+        "For all other questions, use the information provided below if relevant. "
         "If you do not know the answer, reply exactly: 'Sorry, the answer is not available.'\n\n"
-        f"Here is the document context:\n{context}\n\n"
+        "Do not mention the provided document or its contents directly.\n\n"
+        f"{context}\n\n"
         f"Conversation history:\n{history_str}"
     )
 
@@ -75,27 +74,36 @@ def chatbot_home(request):
 # 3. View to Handle Chatbot Input
 def get_chatbot_response(request):
     if request.method == 'GET':
-        user_input = request.GET.get('user_input', '')
+        user_input = request.GET.get('user_input', '').strip()
 
-        # Find the most relevant chunks using keyword matching
-        relevant_chunks = []
-        user_words = set(user_input.lower().split())
-        for chunk in chunks:
-            chunk_words = set(chunk.lower().split())
-            if user_words & chunk_words:
-                relevant_chunks.append(chunk)
+        # List of general conversation keywords/phrases
+        general_keywords = [
+            "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
+            "how are you", "what's up", "goodbye", "bye", "see you", "thank you", "thanks"
+        ]
 
-        # Use up to 2 most relevant chunks, or fallback to the first chunk
-        if relevant_chunks:
-            context = " ".join(relevant_chunks[:2])
-        elif len(chunks) > 0:
-            context = chunks[0]
-        else:
+        # Check if user input is a general conversation
+        if any(greet in user_input.lower() for greet in general_keywords):
             context = ""
+        else:
+            # Find the most relevant chunks using keyword matching
+            relevant_chunks = []
+            user_words = set(user_input.lower().split())
+            for chunk in chunks:
+                chunk_words = set(chunk.lower().split())
+                if user_words & chunk_words:
+                    relevant_chunks.append(chunk)
+
+            # Use up to 2 most relevant chunks, or fallback to the first chunk
+            if relevant_chunks:
+                context = " ".join(relevant_chunks[:2])
+            elif len(chunks) > 0:
+                context = chunks[0]
+            else:
+                context = ""
 
         # Get conversation history from session
         history = request.session.get('chat_history', [])
-        # Only keep the last 5 exchanges for brevity
         history = history[-5:]
 
         # Query Mistral with history
