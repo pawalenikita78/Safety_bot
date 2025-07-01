@@ -43,7 +43,7 @@ def query_mistral(prompt, context, history=None):
     )
 
     api_url = "https://api.mistral.ai/v1/chat/completions"
-    api_key = "p3TWNjZ8YQ0gGJRU4DWcf7o8avLqfuZ9"
+    api_key = "hT3WYa23HqD6eAkYxmmZKceSAOtR5XGt"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
