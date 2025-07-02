@@ -220,6 +220,10 @@
             <div id="messages"></div>
         </div>
         <form onsubmit="event.preventDefault(); sendMessage();">
+            <select id="source-select" style="padding: 10px; border-radius: 8px;">
+                <option value="general">General</option>
+                <option value="emergency">Emergency</option>
+            </select>
             <input type="text" id="prompt" placeholder="Type your message here..." autocomplete="off" />
             <button type="submit" id="send-btn">
                 <i class="fas fa-paper-plane"></i>
@@ -254,7 +258,8 @@
             const promptInput = document.getElementById('prompt');
             const prompt = promptInput.value.trim();
             const messages = document.getElementById('messages');
-            
+            const source = document.getElementById('source-select').value; // Get selected source
+
             if (!prompt) return;
 
             // Add user message to chat
@@ -273,9 +278,9 @@
             promptInput.value = '';
             scrollToBottom();
 
-            // Make an API call to Django backend
+            // Make an API call to Django backend, including the source parameter
             axios.get('/get_chatbot_response/', {
-                params: { user_input: prompt }
+                params: { user_input: prompt, source: source }
             })
             .then(function(response) {
                 messages.removeChild(botTypingIndicator);
